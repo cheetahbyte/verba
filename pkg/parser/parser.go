@@ -1,3 +1,4 @@
+// pkg/parser/parser.go
 package parser
 
 import (
@@ -12,8 +13,8 @@ import (
 
 var commandRegex = regexp.MustCompile(`^::(\w+)\{(.*?)\}$`)
 
-func ParseFile(path string) ([]commands.CommandResult, error) {
-	var result []commands.CommandResult
+func ParseFile(path string) ([]commands.Command, error) {
+	var result []commands.Command
 	file, err := os.Open(path)
 	if err != nil {
 		return nil, err
@@ -23,68 +24,59 @@ func ParseFile(path string) ([]commands.CommandResult, error) {
 	scanner := bufio.NewScanner(file)
 	for scanner.Scan() {
 		line := scanner.Text()
-		cmd, err := ProcessCommand(line)
+		cmds, err := ProcessCommand(line)
 		if err != nil {
 			fmt.Println("Fehler:", err)
 			continue
 		}
-
-		if cmd.Type == "include" && len(cmd.Args) == 1 {
-			subCommands, err := ParseFile(cmd.Args[0])
-			if err != nil {
-				fmt.Println("Fehler beim Parsen von Include-Datei:", err)
-				continue
-			}
-			result = append(result, subCommands...)
-		} else {
-			result = append(result, cmd)
-		}
+		result = append(result, cmds...)
 	}
 
 	return result, nil
 }
 
-// ProcessCommand parses a line and returns structured data
-func ProcessCommand(line string) (commands.CommandResult, error) {
+// in parser.go
+func ProcessCommand(line string) ([]commands.Command, error) {
 	line = strings.TrimSpace(line)
-
-	// Ignore empty lines (no error)
 	if line == "" {
-		return commands.CommandResult{Type: "text", Args: []string{""}}, nil
+		return []commands.Command{commands.TextCommand{Args: []string{""}}}, nil
 	}
 
-	// Check if the line matches the command format
 	matches := commandRegex.FindStringSubmatch(line)
 	if len(matches) == 3 {
 		command := matches[1]
-		args := strings.Split(matches[2], ",") // Split arguments by comma
-		for i := range args {
-			args[i] = strings.TrimSpace(args[i]) // Trim spaces from arguments
-		}
+		args := splitArgs(matches[2])
 
 		switch command {
-		// control instructions
-		case "margin":
-			return commands.Margin(args)
 		case "class":
-			return commands.Class(args)
-		case "include":
-			return commands.Include(args)
-		// specials
-		case "figure":
-			return commands.Figure(args)
-		// text formatting
-		case "subsection":
-			return commands.Subsection(args), nil
-		case "section":
-			return commands.Section(args), nil
+			return []commands.Command{commands.ClassCommand{Args: args}}, nil
 		case "bold":
-			return commands.Bold(args), nil
+			return []commands.Command{commands.BoldCommand{Args: args}}, nil
+		case "margin":
+			return []commands.Command{commands.MarginCommand{Args: args}}, nil
+		case "section":
+			return []commands.Command{commands.SectionCommand{Args: args}}, nil
+		case "subsection":
+			return []commands.Command{commands.SubsectionCommand{Args: args}}, nil
+		case "figure":
+			return []commands.Command{commands.FigureCommand{Args: args}}, nil
+		case "include":
+			if len(args) != 1 {
+				return nil, fmt.Errorf("::include erwartet genau ein Argument")
+			}
+			return ParseFile(args[0]) // direkt Commands aus Datei zurückgeben
 		default:
-			return commands.CommandResult{Type: "unknown", Args: []string{command}}, nil
+			return []commands.Command{commands.UnknownCommand{Raw: command}}, nil
 		}
 	}
 
-	// If it's not a command, treat it as normal text
-	return commands.CommandResult{Type: "text", Args: []string{line}}, nil
+	return []commands.Command{commands.TextCommand{Args: []string{line}}}, nil
+}
+
+func splitArgs(argStr string) []string {
+	args := strings.Split(argStr, ",")
+	for i := range args {
+		args[i] = strings.TrimSpace(args[i])
+	}
+	return args
 }
