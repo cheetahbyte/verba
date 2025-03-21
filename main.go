@@ -155,9 +155,9 @@ func main() {
 				caption = cmd.Args[1]
 			}
 
-			spacingAbove := 8.0          // Platz über dem Bild
-			spacingBelow := 4.0          // Platz nach der Caption
-			spacingImageToCaption := 1.0 // Abstand zwischen Bild und Caption
+			spacingAbove := 8.0
+			spacingBelow := 4.0
+			spacingImageToCaption := 1.0
 
 			y += spacingAbove // Abstand nach vorherigem Text
 
