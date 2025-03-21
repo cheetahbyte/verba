@@ -1,7 +1,6 @@
 package main
 
 import (
-	"bufio"
 	"fmt"
 	"os"
 	"strconv"
@@ -9,13 +8,13 @@ import (
 	"time"
 
 	"github.com/cheetahbyte/verba/pkg/commands"
+	"github.com/cheetahbyte/verba/pkg/documents"
 	"github.com/cheetahbyte/verba/pkg/parser"
 	"github.com/jung-kurt/gofpdf"
 )
 
 func main() {
 	start := time.Now()
-	// Datei öffnen
 	file, err := os.Open("text.verba")
 	if err != nil {
 		fmt.Println("Fehler beim Öffnen der Datei:", err)
@@ -23,18 +22,24 @@ func main() {
 	}
 	defer file.Close()
 
-	// Standardmargen setzen
-	left, right, top, bottom := 20.0, 20.0, 30.0, 30.0
+	documentSettings := documents.Document{
+		Margin: documents.DocumentMargin{
+			Left:   10.0,
+			Right:  10.0,
+			Top:    10.0,
+			Bottom: 10.0,
+		},
+		PageWidth: 210.0,
+	}
 
-	// PDF erstellen
+	var commandsList []commands.CommandResult
+	commandsList, _ = parser.ParseFile("text.verba")
+
 	pdf := gofpdf.New("P", "mm", "A4", "")
-	pdf.SetMargins(left, top, right)
-	pdf.SetAutoPageBreak(true, bottom)
-	pdf.AddPage()
-	pageWidth, _ := pdf.GetPageSize()
-	textWidth := pageWidth - left - right // Berechnet verfügbare Textbreite
+	y := 0.0
+	fontLoaded := false
+	pdfInitialized := false
 
-	// CMU Serif Font einbinden
 	fontRegular := "fonts/cmunrm.ttf"
 	fontItalic := "fonts/cmunti.ttf"
 	fontBold := "fonts/cmunbx.ttf"
@@ -46,48 +51,72 @@ func main() {
 	pdf.AddUTF8Font("CMUSerif", "BI", fontBoldItalic)
 	pdf.SetFont("CMUSerif", "", 11)
 
-	var commandsList []commands.CommandResult
-	y := top
-	scanner := bufio.NewScanner(file)
-
-	// **Lese und speichere Befehle**
-	for scanner.Scan() {
-		line := scanner.Text()
-		cmd, err := parser.ProcessCommand(line)
-		if err != nil {
-			fmt.Println("Fehler:", err)
-			continue
-		}
-		commandsList = append(commandsList, cmd)
-	}
-
-	// **Verarbeite Befehle und Texte**
 	for _, cmd := range commandsList {
+		if !pdfInitialized {
+			if cmd.Type == "class" {
+				documentSettings = documents.DocumentClasses[cmd.Args[0]]
+			}
+
+			pdf.SetMargins(documentSettings.Margin.Left, documentSettings.Margin.Top, documentSettings.Margin.Right)
+			pdf.SetAutoPageBreak(true, documentSettings.Margin.Bottom)
+			pdf.AddPage()
+			pdf.SetXY(documentSettings.Margin.Left, documentSettings.Margin.Top)
+			y = documentSettings.Margin.Top
+			pdfInitialized = true
+
+			// Fonts laden
+			if !fontLoaded {
+				pdf.AddUTF8Font("CMUSerif", "", "fonts/cmunrm.ttf")
+				pdf.AddUTF8Font("CMUSerif", "I", "fonts/cmunti.ttf")
+				pdf.AddUTF8Font("CMUSerif", "B", "fonts/cmunbx.ttf")
+				pdf.AddUTF8Font("CMUSerif", "BI", "fonts/cmunbi.ttf")
+				pdf.SetFont("CMUSerif", "", 11)
+				fontLoaded = true
+			}
+
+			// Bei class sofort return, da er oben schon verarbeitet wurde
+			if cmd.Type == "class" {
+				continue
+			}
+		}
 		switch cmd.Type {
+		case "class":
+			documentSettings = documents.DocumentClasses[cmd.Args[0]]
 		case "margin":
 			if len(cmd.Args) == 4 {
 				newLeft, _ := strconv.ParseFloat(cmd.Args[0], 64)
 				newRight, _ := strconv.ParseFloat(cmd.Args[1], 64)
 				newTop, _ := strconv.ParseFloat(cmd.Args[2], 64)
 				newBottom, _ := strconv.ParseFloat(cmd.Args[3], 64)
-				left, right, top, bottom = newLeft, newRight, newTop, newBottom
-				textWidth = pageWidth - left - right
-				pdf.SetMargins(left, top, right)
-				pdf.SetAutoPageBreak(true, bottom)
-				pdf.SetXY(left, top)
-				y = top // Reset text position
+				documentSettings.Margin.Right = newRight
+				documentSettings.Margin.Left = newLeft
+				documentSettings.Margin.Top = newTop
+				documentSettings.Margin.Bottom = newBottom
+				pdf.SetMargins(documentSettings.Margin.Left, documentSettings.Margin.Top, documentSettings.Margin.Right)
+				pdf.SetAutoPageBreak(true, documentSettings.Margin.Bottom)
+				pdf.SetXY(documentSettings.Margin.Left, documentSettings.Margin.Top)
+				y = documentSettings.Margin.Top // Reset text position
 			}
 
 		case "subsection":
-			if y > top {
-				y += 6 // Mehr Abstand vor Unterabschnitt
+			if y > documentSettings.Margin.Top {
+				y += 4
+			}
+			pdf.SetFont("CMUSerif", "B", 12)
+			pdf.SetXY(documentSettings.Margin.Left, y)
+			pdf.MultiCell(documentSettings.TextWidth(), 7, cmd.Args[0], "", "L", false)
+			y = pdf.GetY() + 1
+			pdf.SetFont("CMUSerif", "", 11)
+
+		case "section":
+			if y > documentSettings.Margin.Top {
+				y += 4
 			}
 			pdf.SetFont("CMUSerif", "B", 14)
-			pdf.SetXY(left, y)
-			pdf.MultiCell(textWidth, 7, cmd.Args[0], "", "L", false)
-			y = pdf.GetY() + 4 // Update y nach MultiCell
-
-			pdf.SetFont("CMUSerif", "", 11) // Zurück auf Standard
+			pdf.SetXY(documentSettings.Margin.Left, y)
+			pdf.MultiCell(documentSettings.TextWidth(), 7, cmd.Args[0], "", "L", false)
+			y = pdf.GetY() + 1
+			pdf.SetFont("CMUSerif", "", 11)
 
 		case "bold":
 			pdf.SetFont("CMUSerif", "B", 11)
@@ -95,37 +124,76 @@ func main() {
 			text := strings.Join(cmd.Args, " ")
 			if strings.HasSuffix(text, "\\") {
 				text = strings.TrimSuffix(text, "\\")
-				pdf.MultiCell(textWidth, 5, text, "", "L", false)
+				pdf.MultiCell(documentSettings.TextWidth(), 5, text, "", "L", false)
 				y = pdf.GetY() + 5 // **New paragraph because of "\\"**
 			} else {
-				pdf.MultiCell(textWidth, 5, text, "", "L", false)
+				pdf.MultiCell(documentSettings.TextWidth(), 5, text, "", "L", false)
 				y = pdf.GetY() // **Inline bold (no extra spacing)**
 			}
 			pdf.SetFont("CMUSerif", "", 11)
 
 		case "text":
-			pdf.SetXY(left, y)
+			pdf.SetXY(documentSettings.Margin.Left, y)
 			text := strings.Join(cmd.Args, " ")
 			if strings.HasSuffix(text, "\\") {
 				text = strings.TrimSuffix(text, "\\")
-				pdf.MultiCell(textWidth, 5, text, "", "J", false)
+				pdf.MultiCell(documentSettings.TextWidth(), 5, text, "", "J", false)
 				y = pdf.GetY() + 5
 			} else {
-				pdf.MultiCell(textWidth, 5, text, "", "J", false)
+				pdf.MultiCell(documentSettings.TextWidth(), 5, text, "", "J", false)
 				y = pdf.GetY()
 			}
 
+		case "figure":
+			if len(cmd.Args) < 1 {
+				break
+			}
+
+			imagePath := cmd.Args[0]
+			caption := ""
+			if len(cmd.Args) >= 2 {
+				caption = cmd.Args[1]
+			}
+
+			spacingAbove := 8.0          // Platz über dem Bild
+			spacingBelow := 4.0          // Platz nach der Caption
+			spacingImageToCaption := 1.0 // Abstand zwischen Bild und Caption
+
+			y += spacingAbove // Abstand nach vorherigem Text
+
+			imgWidth := documentSettings.TextWidth()
+			imgHeight := 0.0 // Höhe automatisch skalieren
+
+			// Bild zeichnen
+			pdf.ImageOptions(imagePath, documentSettings.Margin.Left, y, imgWidth, imgHeight, false, gofpdf.ImageOptions{
+				ImageType: "",
+				ReadDpi:   true,
+			}, 0, "")
+
+			// Manuelle Y-Anpassung nach dem Bild
+			y += imgWidth * 0.6 // Falls Bildhöhe nicht fix ist
+
+			if caption != "" {
+				y += spacingImageToCaption // Abstand zwischen Bild und Caption
+				pdf.SetFont("CMUSerif", "I", 10)
+				pdf.SetXY(documentSettings.Margin.Left, y)
+				pdf.MultiCell(documentSettings.TextWidth(), 5, caption, "", "C", false)
+				y = pdf.GetY() + spacingBelow // Abstand nach Caption
+				pdf.SetFont("CMUSerif", "", 11)
+			}
+
 		case "unknown":
-			pdf.SetXY(left, y)
-			pdf.MultiCell(textWidth, 5, "[Unbekannter Befehl: "+cmd.Args[0]+"]", "", "L", false)
+			pdf.SetXY(documentSettings.Margin.Left, y)
+			pdf.MultiCell(documentSettings.TextWidth(), 5, "[Unbekannter Befehl: "+cmd.Args[0]+"]", "", "L", false)
 			y = pdf.GetY() + 2
 		}
 
 		// stop overlap
-		if y > (pageWidth - bottom - 10) {
+		if y > (documentSettings.PageWidth - documentSettings.Margin.Bottom - 10) {
 			pdf.AddPage()
-			y = top
+			y = documentSettings.Margin.Top
 		}
+
 	}
 
 	processTime := time.Since(start)

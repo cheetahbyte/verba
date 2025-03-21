@@ -1,6 +1,5 @@
 package commands
 
-// Subsection processes a subsection command
-func Subsection(args []string) CommandResult {
-	return CommandResult{Type: "subsection", Args: args}
+func Section(args []string) CommandResult {
+	return CommandResult{Type: "section", Args: args}
 }

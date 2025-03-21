@@ -1,6 +1,9 @@
 package parser
 
 import (
+	"bufio"
+	"fmt"
+	"os"
 	"regexp"
 	"strings"
 
@@ -8,6 +11,38 @@ import (
 )
 
 var commandRegex = regexp.MustCompile(`^::(\w+)\{(.*?)\}$`)
+
+func ParseFile(path string) ([]commands.CommandResult, error) {
+	var result []commands.CommandResult
+	file, err := os.Open(path)
+	if err != nil {
+		return nil, err
+	}
+	defer file.Close()
+
+	scanner := bufio.NewScanner(file)
+	for scanner.Scan() {
+		line := scanner.Text()
+		cmd, err := ProcessCommand(line)
+		if err != nil {
+			fmt.Println("Fehler:", err)
+			continue
+		}
+
+		if cmd.Type == "include" && len(cmd.Args) == 1 {
+			subCommands, err := ParseFile(cmd.Args[0])
+			if err != nil {
+				fmt.Println("Fehler beim Parsen von Include-Datei:", err)
+				continue
+			}
+			result = append(result, subCommands...)
+		} else {
+			result = append(result, cmd)
+		}
+	}
+
+	return result, nil
+}
 
 // ProcessCommand parses a line and returns structured data
 func ProcessCommand(line string) (commands.CommandResult, error) {
@@ -28,10 +63,21 @@ func ProcessCommand(line string) (commands.CommandResult, error) {
 		}
 
 		switch command {
+		// control instructions
 		case "margin":
 			return commands.Margin(args)
+		case "class":
+			return commands.Class(args)
+		case "include":
+			return commands.Include(args)
+		// specials
+		case "figure":
+			return commands.Figure(args)
+		// text formatting
 		case "subsection":
 			return commands.Subsection(args), nil
+		case "section":
+			return commands.Section(args), nil
 		case "bold":
 			return commands.Bold(args), nil
 		default:
