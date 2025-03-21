@@ -1,16 +1,35 @@
+// pkg/commands/class.go
 package commands
 
 import (
 	"fmt"
 
 	"github.com/cheetahbyte/verba/pkg/documents"
+	"github.com/jung-kurt/gofpdf"
 )
 
-func Class(args []string) (CommandResult, error) {
-	// first sanity check wether document class exists
-	_, ok := documents.DocumentClasses[args[0]]
-	if !ok {
-		return CommandResult{}, fmt.Errorf("unknown document type: %s", args[0])
+type ClassCommand struct {
+	Args []string
+}
+
+func (c ClassCommand) Execute(pdf *gofpdf.Fpdf, y *float64, doc *documents.Document) error {
+	if len(c.Args) != 1 {
+		return fmt.Errorf("::class erwartet genau ein Argument")
 	}
-	return CommandResult{Type: "class", Args: args}, nil
+
+	className := c.Args[0]
+	class, ok := documents.DocumentClasses[className]
+	if !ok {
+		return fmt.Errorf("Unbekannte Dokumentklasse: %s", className)
+	}
+
+	// apply class settings
+	*doc = class
+
+	pdf.SetMargins(doc.Margin.Left, doc.Margin.Top, doc.Margin.Right)
+	pdf.SetAutoPageBreak(true, doc.Margin.Bottom)
+	pdf.SetXY(doc.Margin.Left, doc.Margin.Top)
+	*y = doc.Margin.Top
+
+	return nil
 }
