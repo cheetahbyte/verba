@@ -159,10 +159,10 @@ func main() {
 			spacingBelow := 4.0
 			spacingImageToCaption := 1.0
 
-			y += spacingAbove // Abstand nach vorherigem Text
+			y += spacingAbove
 
 			imgWidth := documentSettings.TextWidth()
-			imgHeight := 0.0 // Höhe automatisch skalieren
+			imgHeight := 0.0
 
 			// Bild zeichnen
 			pdf.ImageOptions(imagePath, documentSettings.Margin.Left, y, imgWidth, imgHeight, false, gofpdf.ImageOptions{
