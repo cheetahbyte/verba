@@ -57,7 +57,7 @@ func LoadBibFile(path string, doc *documents.Document) error {
 
 			switch entryType {
 			case "article":
-				entry = bibmodel.ArticleBibEntry{
+				entry = &bibmodel.ArticleBibEntry{
 					BibEntry: bibmodel.BibEntry{
 						Key:    key,
 						Author: fields["author"],
@@ -72,7 +72,7 @@ func LoadBibFile(path string, doc *documents.Document) error {
 				}
 			default:
 				// Fallback: Basic BibEntry
-				entry = bibmodel.BibEntry{
+				entry = &bibmodel.BibEntry{
 					Key:    key,
 					Author: fields["author"],
 					Title:  fields["title"],

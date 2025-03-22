@@ -1,7 +1,6 @@
 package commands
 
 import (
-	"fmt"
 	"strings"
 
 	"github.com/cheetahbyte/verba/pkg/documents"
@@ -14,13 +13,10 @@ type CiteCommand struct {
 
 func (c CiteCommand) InlineText(doc *documents.Document) string {
 	labels := []string{}
-	fmt.Println("cite command")
 	for _, key := range c.Args {
-		fmt.Println("citing", key)
-		doc.Cite(key)
-		id := doc.Bibliography.CitationIDs[key]
-		fmt.Println(id)
-		labels = append(labels, fmt.Sprintf("[%d]", id))
+		entry := doc.Cite(key) // registriert das Zitat
+		label := doc.Bibliography.Style.CiteLabel(entry)
+		labels = append(labels, label)
 	}
 	return strings.Join(labels, ", ")
 }
