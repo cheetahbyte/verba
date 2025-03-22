@@ -23,7 +23,7 @@ func (b BibliographyCommand) Execute(pdf *gofpdf.Fpdf, y *float64, doc *document
 
 	pdf.SetFont("CMUSerif", "", 11)
 	for i, entry := range doc.Bibliography.Used {
-		ref := fmt.Sprintf("[%d] %s", i+1, entry.FormatReference())
+		ref := doc.Bibliography.Style.Format(entry, i+1)
 		pdf.MultiCell(doc.TextWidth(), 5, ref, "", "J", false)
 		*y = pdf.GetY() + 3
 	}

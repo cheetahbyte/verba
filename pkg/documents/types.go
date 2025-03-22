@@ -2,6 +2,7 @@ package documents
 
 import (
 	"github.com/cheetahbyte/verba/pkg/bibmodel"
+	"github.com/cheetahbyte/verba/pkg/bibstyle"
 )
 
 type DocumentMargin struct {
@@ -15,6 +16,7 @@ type DocumentBibliography struct {
 	Bibliography map[string]bibmodel.Citable // key → Eintrag
 	Used         []bibmodel.Citable          // in Reihenfolge der Zitate
 	CitationIDs  map[string]int              // key → ID [1], [2], ...
+	Style        bibstyle.Formatter
 }
 
 func (db *DocumentBibliography) GetEntry(key string) (bibmodel.Citable, bool) {
@@ -36,6 +38,7 @@ func NewDocument() *Document {
 			Bibliography: make(map[string]bibmodel.Citable),
 			Used:         []bibmodel.Citable{},
 			CitationIDs:  make(map[string]int),
+			Style:        bibstyle.IEEEFormatter{}, // default fallback
 		},
 	}
 }
@@ -56,14 +59,14 @@ func (d *Document) AddBibEntry(entry bibmodel.Citable) {
 	}
 }
 
-func (d *Document) Cite(key string) {
+func (d *Document) Cite(key string) bibmodel.Citable {
 	if d.Bibliography.CitationIDs == nil {
 		d.Bibliography.CitationIDs = make(map[string]int)
 	}
 
 	entry, exists := d.Bibliography.Bibliography[key]
 	if !exists {
-		return
+		return &bibmodel.BibEntry{}
 	}
 
 	if !d.Bibliography.IsUsed(entry) {
@@ -71,7 +74,9 @@ func (d *Document) Cite(key string) {
 
 		newID := len(d.Bibliography.CitationIDs) + 1
 		d.Bibliography.CitationIDs[key] = newID
+		entry.SetID(uint16(newID))
 	}
+	return entry
 }
 
 func (bib *DocumentBibliography) Use(entry bibmodel.Citable) {

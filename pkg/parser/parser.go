@@ -60,7 +60,10 @@ func ProcessCommand(line string) ([]commands.Command, error) {
 				return []commands.Command{commands.BibfileCommand{Args: args}}, nil
 			case "bibliography":
 				return []commands.Command{commands.BibliographyCommand{Args: args}}, nil
+			case "bibstyle":
+				return []commands.Command{commands.BibstyleCommand{Args: args}}, nil
 			}
+
 		}
 	}
 
