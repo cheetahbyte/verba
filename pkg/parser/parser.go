@@ -81,6 +81,9 @@ func ProcessCommand(line string) ([]commands.Command, error) {
 			paragraph.Elements = append(paragraph.Elements, commands.CiteCommand{Args: args})
 		case "bold":
 			paragraph.Elements = append(paragraph.Elements, commands.BoldCommand{Args: args})
+		case "italic":
+			paragraph.Elements = append(paragraph.Elements, commands.ItalicCommand{Args: args})
+
 		default:
 			paragraph.Elements = append(paragraph.Elements,
 				commands.TextCommand{Args: []string{"[UNKNOWN:" + cmdName + "]"}})

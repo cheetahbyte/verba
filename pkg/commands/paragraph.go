@@ -19,9 +19,12 @@ func (p ParagraphCommand) ExecuteInline(pdf *gofpdf.Fpdf, y *float64, doc *docum
 				doc.Cite(key)
 				pdf.Write(5, elem.(CiteCommand).InlineText(doc))
 			}
+		case ItalicCommand:
+			elem.(ItalicCommand).ExecuteInline(doc, pdf)
 		case BoldCommand:
-			// Optional: handle inline styles
+			elem.(BoldCommand).ExecuteInline(doc, pdf)
 		}
+
 	}
 	pdf.Ln(6)
 	return nil

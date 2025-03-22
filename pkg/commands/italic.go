@@ -7,12 +7,12 @@ import (
 	"github.com/jung-kurt/gofpdf"
 )
 
-type BoldCommand struct {
+type ItalicCommand struct {
 	Args []string
 }
 
-func (b BoldCommand) Execute(pdf *gofpdf.Fpdf, y *float64, doc *documents.Document) error {
-	pdf.SetFont("CMUSerif", "B", 11)
+func (b ItalicCommand) Execute(pdf *gofpdf.Fpdf, y *float64, doc *documents.Document) error {
+	pdf.SetFont("CMUSerif", "I", 11)
 	text := strings.Join(b.Args, " ")
 	if strings.HasSuffix(text, "\\") {
 		text = strings.TrimSuffix(text, "\\")
@@ -26,9 +26,9 @@ func (b BoldCommand) Execute(pdf *gofpdf.Fpdf, y *float64, doc *documents.Docume
 	return nil
 }
 
-func (b BoldCommand) ExecuteInline(doc *documents.Document, pdf *gofpdf.Fpdf) {
+func (b ItalicCommand) ExecuteInline(doc *documents.Document, pdf *gofpdf.Fpdf) {
 	text := strings.Join(b.Args, ", ")
-	pdf.SetFontStyle("B")
+	pdf.SetFontStyle("I")
 	pdf.Write(5, text)
 	pdf.SetFontStyle("") // zurück zu normal
 }
