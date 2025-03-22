@@ -25,3 +25,10 @@ func (b BoldCommand) Execute(pdf *gofpdf.Fpdf, y *float64, doc *documents.Docume
 	pdf.SetFont("CMUSerif", "", 11)
 	return nil
 }
+
+func (b BoldCommand) InlineText(doc *documents.Document, pdf *gofpdf.Fpdf) {
+	text := strings.Join(b.Args, ", ")
+	pdf.SetFontStyle("B")
+	pdf.Write(5, text)
+	pdf.SetFontStyle("") // zurück zu normal
+}

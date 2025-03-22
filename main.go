@@ -2,8 +2,10 @@ package main
 
 import (
 	"fmt"
+	"log"
 	"time"
 
+	"github.com/cheetahbyte/verba/pkg/commands"
 	"github.com/cheetahbyte/verba/pkg/documents"
 	"github.com/cheetahbyte/verba/pkg/parser"
 	"github.com/jung-kurt/gofpdf"
@@ -12,16 +14,7 @@ import (
 func main() {
 	start := time.Now()
 
-	documentSettings := documents.Document{
-		Margin: documents.DocumentMargin{
-			Left:   10.0,
-			Right:  10.0,
-			Top:    10.0,
-			Bottom: 10.0,
-		},
-		PageWidth: 210.0,
-	}
-
+	doc := documents.NewDocument()
 	// PDF initialisieren
 	pdf := gofpdf.New("P", "mm", "A4", "")
 	y := 0.0
@@ -38,11 +31,11 @@ func main() {
 	pdf.AddUTF8Font("CMUSerif", "BI", fontBoldItalic)
 	pdf.SetFont("CMUSerif", "", 11)
 
-	pdf.SetMargins(documentSettings.Margin.Left, documentSettings.Margin.Top, documentSettings.Margin.Right)
-	pdf.SetAutoPageBreak(true, documentSettings.Margin.Bottom)
+	pdf.SetMargins(doc.Margin.Left, doc.Margin.Top, doc.Margin.Right)
+	pdf.SetAutoPageBreak(true, doc.Margin.Bottom)
 	pdf.AddPage()
-	pdf.SetXY(documentSettings.Margin.Left, documentSettings.Margin.Top)
-	y = documentSettings.Margin.Top
+	pdf.SetXY(doc.Margin.Left, doc.Margin.Top)
+	y = doc.Margin.Top
 
 	// Datei parsen
 	commandList, err := parser.ParseFile("thesis.verba")
@@ -53,16 +46,14 @@ func main() {
 
 	// Alle Commands ausführen
 	for _, cmd := range commandList {
-		err := cmd.Execute(pdf, &y, &documentSettings)
-		if err != nil {
-			fmt.Println("Fehler beim Ausführen eines Befehls:", err)
-			continue
-		}
-
-		// Seitenüberlauf prüfen
-		if y > (documentSettings.PageWidth - documentSettings.Margin.Bottom - 10) {
-			pdf.AddPage()
-			y = documentSettings.Margin.Top
+		switch c := cmd.(type) {
+		case commands.ParagraphCommand:
+			err := c.ExecuteInline(pdf, &y, doc)
+			if err != nil {
+				log.Println("Paragraph render error:", err)
+			}
+		default:
+			c.Execute(pdf, &y, doc)
 		}
 	}
 

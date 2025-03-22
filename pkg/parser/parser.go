@@ -1,4 +1,3 @@
-// pkg/parser/parser.go
 package parser
 
 import (
@@ -11,7 +10,7 @@ import (
 	"github.com/cheetahbyte/verba/pkg/commands"
 )
 
-var commandRegex = regexp.MustCompile(`^::(\w+)\{(.*?)\}$`)
+var commandRegex = regexp.MustCompile(`::(\w+)\{(.*?)\}`)
 
 func ParseFile(path string) ([]commands.Command, error) {
 	var result []commands.Command
@@ -35,42 +34,67 @@ func ParseFile(path string) ([]commands.Command, error) {
 	return result, nil
 }
 
-// in parser.go
 func ProcessCommand(line string) ([]commands.Command, error) {
 	line = strings.TrimSpace(line)
 	if line == "" {
-		return []commands.Command{commands.TextCommand{Args: []string{""}}}, nil
+		return []commands.Command{}, nil
 	}
 
-	matches := commandRegex.FindStringSubmatch(line)
-	if len(matches) == 3 {
-		command := matches[1]
-		args := splitArgs(matches[2])
+	// ➤ Sonderfall: Zeile ist ein reiner Blockbefehl wie ::section{...}
+	if strings.HasPrefix(line, "::") && commandRegex.MatchString(line) {
+		matches := commandRegex.FindAllStringSubmatch(line, -1)
+		if len(matches) == 1 && matches[0][0] == line {
+			command := matches[0][1]
+			args := splitArgs(matches[0][2])
 
-		switch command {
-		case "class":
-			return []commands.Command{commands.ClassCommand{Args: args}}, nil
-		case "bold":
-			return []commands.Command{commands.BoldCommand{Args: args}}, nil
-		case "margin":
-			return []commands.Command{commands.MarginCommand{Args: args}}, nil
-		case "section":
-			return []commands.Command{commands.SectionCommand{Args: args}}, nil
-		case "subsection":
-			return []commands.Command{commands.SubsectionCommand{Args: args}}, nil
-		case "figure":
-			return []commands.Command{commands.FigureCommand{Args: args}}, nil
-		case "include":
-			if len(args) != 1 {
-				return nil, fmt.Errorf("::include erwartet genau ein Argument")
+			switch command {
+			case "class":
+				return []commands.Command{commands.ClassCommand{Args: args}}, nil
+			case "margin":
+				return []commands.Command{commands.MarginCommand{Args: args}}, nil
+			case "section":
+				return []commands.Command{commands.SectionCommand{Args: args}}, nil
+			case "subsection":
+				return []commands.Command{commands.SubsectionCommand{Args: args}}, nil
+			case "bibfile":
+				return []commands.Command{commands.BibfileCommand{Args: args}}, nil
+			case "bibliography":
+				return []commands.Command{commands.BibliographyCommand{Args: args}}, nil
 			}
-			return ParseFile(args[0]) // direkt Commands aus Datei zurückgeben
-		default:
-			return []commands.Command{commands.UnknownCommand{Raw: command}}, nil
 		}
 	}
 
-	return []commands.Command{commands.TextCommand{Args: []string{line}}}, nil
+	var paragraph commands.ParagraphCommand
+	lastIndex := 0
+	matches := commandRegex.FindAllStringSubmatchIndex(line, -1)
+
+	for _, match := range matches {
+		if match[0] > lastIndex {
+			paragraph.Elements = append(paragraph.Elements,
+				commands.TextCommand{Args: []string{line[lastIndex:match[0]]}})
+		}
+
+		cmdName := line[match[2]:match[3]]
+		args := splitArgs(line[match[4]:match[5]])
+		switch cmdName {
+		case "cite":
+			paragraph.Elements = append(paragraph.Elements, commands.CiteCommand{Args: args})
+		case "bold":
+			paragraph.Elements = append(paragraph.Elements, commands.BoldCommand{Args: args})
+		default:
+			paragraph.Elements = append(paragraph.Elements,
+				commands.TextCommand{Args: []string{"[UNKNOWN:" + cmdName + "]"}})
+		}
+
+		lastIndex = match[1]
+	}
+
+	if lastIndex < len(line) {
+		paragraph.Elements = append(paragraph.Elements,
+			commands.TextCommand{Args: []string{line[lastIndex:]}})
+	}
+
+	return []commands.Command{paragraph}, nil
 }
 
 func splitArgs(argStr string) []string {
