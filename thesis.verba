@@ -1,0 +1,7 @@
+::class{report}
+::bibfile{literatur.bib}
+Dies ist ein Beispieltext mit einem Zitat zu einem Buch ::cite{osowiecki}.
+::section{Fazit}
+Wie gezeigt, lässt sich Literatur elegant in Verba integrieren.
+Das ist ::bold{wichtig} und ::italic{betont}.
+::bibliography{}

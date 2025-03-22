@@ -1,0 +1,9 @@
+::bibfile{literatur.bib}
+
+Dies ist ein Beispieltext mit einem Zitat zu einem Buch ::cite{Mueller2020}.
+Ein weiterer Absatz mit einem anderen Zitat ::cite{Schmidt2019}.
+
+::section{Fazit}
+Wie gezeigt, lässt sich Literatur elegant in Verba integrieren.
+
+::bibliography{}
