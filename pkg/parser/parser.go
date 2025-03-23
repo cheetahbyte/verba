@@ -8,12 +8,13 @@ import (
 	"strings"
 
 	"github.com/cheetahbyte/verba/pkg/commands"
+	"github.com/cheetahbyte/verba/pkg/context"
 )
 
 var commandRegex = regexp.MustCompile(`::(\w+)\{(.*?)\}`)
 
-func ParseFile(path string) ([]commands.Command, error) {
-	var result []commands.Command
+func ParseFile(path string, reg context.CommandRegistry) ([]any, error) {
+	var result []any
 	file, err := os.Open(path)
 	if err != nil {
 		return nil, err
@@ -23,7 +24,7 @@ func ParseFile(path string) ([]commands.Command, error) {
 	scanner := bufio.NewScanner(file)
 	for scanner.Scan() {
 		line := scanner.Text()
-		cmds, err := ProcessCommand(line)
+		cmds, err := ProcessCommand(line, reg)
 		if err != nil {
 			fmt.Println("Fehler:", err)
 			continue
@@ -34,62 +35,58 @@ func ParseFile(path string) ([]commands.Command, error) {
 	return result, nil
 }
 
-func ProcessCommand(line string) ([]commands.Command, error) {
+type ArgSetter interface {
+	SetArgs([]string)
+}
+
+func setArgs(cmd any, args []string) {
+	if s, ok := cmd.(ArgSetter); ok {
+		s.SetArgs(args)
+	}
+}
+
+func ProcessCommand(line string, reg context.CommandRegistry) ([]any, error) {
 	line = strings.TrimSpace(line)
 	if line == "" {
-		return []commands.Command{}, nil
+		return nil, nil
 	}
 
-	// ➤ Sonderfall: Zeile ist ein reiner Blockbefehl wie ::section{...}
+	// ➤ Sonderfall: kompletter Blockbefehl
 	if strings.HasPrefix(line, "::") && commandRegex.MatchString(line) {
 		matches := commandRegex.FindAllStringSubmatch(line, -1)
 		if len(matches) == 1 && matches[0][0] == line {
-			command := matches[0][1]
+			cmdName := matches[0][1]
 			args := splitArgs(matches[0][2])
 
-			switch command {
-			case "class":
-				return []commands.Command{commands.ClassCommand{Args: args}}, nil
-			case "margin":
-				return []commands.Command{commands.MarginCommand{Args: args}}, nil
-			case "section":
-				return []commands.Command{commands.SectionCommand{Args: args}}, nil
-			case "subsection":
-				return []commands.Command{commands.SubsectionCommand{Args: args}}, nil
-			case "bibfile":
-				return []commands.Command{commands.BibfileCommand{Args: args}}, nil
-			case "bibliography":
-				return []commands.Command{commands.BibliographyCommand{Args: args}}, nil
-			case "bibstyle":
-				return []commands.Command{commands.BibstyleCommand{Args: args}}, nil
+			if cmd, ok := reg.Block.Get(cmdName); ok {
+				setArgs(cmd, args)
+				return []any{cmd}, nil
 			}
 
+			return nil, fmt.Errorf("unknown block command: %s", cmdName)
 		}
 	}
 
-	var paragraph commands.ParagraphCommand
+	// ➤ Inline-Kommandos im Fließtext
+	var paragraph = &commands.ParagraphCommand{}
 	lastIndex := 0
 	matches := commandRegex.FindAllStringSubmatchIndex(line, -1)
 
 	for _, match := range matches {
 		if match[0] > lastIndex {
-			paragraph.Elements = append(paragraph.Elements,
-				commands.TextCommand{Args: []string{line[lastIndex:match[0]]}})
+			text := line[lastIndex:match[0]]
+			paragraph.Elements = append(paragraph.Elements, &commands.TextCommand{Args: []string{text}})
 		}
 
 		cmdName := line[match[2]:match[3]]
 		args := splitArgs(line[match[4]:match[5]])
-		switch cmdName {
-		case "cite":
-			paragraph.Elements = append(paragraph.Elements, commands.CiteCommand{Args: args})
-		case "bold":
-			paragraph.Elements = append(paragraph.Elements, commands.BoldCommand{Args: args})
-		case "italic":
-			paragraph.Elements = append(paragraph.Elements, commands.ItalicCommand{Args: args})
 
-		default:
+		if cmd, ok := reg.Inline.Get(cmdName); ok {
+			setArgs(cmd, args)
+			paragraph.Elements = append(paragraph.Elements, cmd)
+		} else {
 			paragraph.Elements = append(paragraph.Elements,
-				commands.TextCommand{Args: []string{"[UNKNOWN:" + cmdName + "]"}})
+				&commands.TextCommand{Args: []string{"[UNKNOWN:" + cmdName + "]"}})
 		}
 
 		lastIndex = match[1]
@@ -97,10 +94,10 @@ func ProcessCommand(line string) ([]commands.Command, error) {
 
 	if lastIndex < len(line) {
 		paragraph.Elements = append(paragraph.Elements,
-			commands.TextCommand{Args: []string{line[lastIndex:]}})
+			&commands.TextCommand{Args: []string{line[lastIndex:]}})
 	}
 
-	return []commands.Command{paragraph}, nil
+	return []any{paragraph}, nil
 }
 
 func splitArgs(argStr string) []string {

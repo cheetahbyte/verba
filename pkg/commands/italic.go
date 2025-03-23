@@ -3,32 +3,36 @@ package commands
 import (
 	"strings"
 
-	"github.com/cheetahbyte/verba/pkg/documents"
-	"github.com/jung-kurt/gofpdf"
+	"github.com/cheetahbyte/verba/pkg/context"
 )
 
 type ItalicCommand struct {
 	Args []string
 }
 
-func (b ItalicCommand) Execute(pdf *gofpdf.Fpdf, y *float64, doc *documents.Document) error {
-	pdf.SetFont("CMUSerif", "I", 11)
+func (b ItalicCommand) Execute(ctx *context.CommandContext) error {
+	ctx.PDF.SetFont("CMUSerif", "I", 11)
 	text := strings.Join(b.Args, " ")
 	if strings.HasSuffix(text, "\\") {
 		text = strings.TrimSuffix(text, "\\")
-		pdf.MultiCell(doc.TextWidth(), 5, text, "", "L", false)
-		*y = pdf.GetY() + 5
+		ctx.PDF.MultiCell(ctx.Document.TextWidth(), 5, text, "", "L", false)
+		*ctx.Y = ctx.PDF.GetY() + 5
 	} else {
-		pdf.MultiCell(doc.TextWidth(), 5, text, "", "L", false)
-		*y = pdf.GetY()
+		ctx.PDF.MultiCell(ctx.Document.TextWidth(), 5, text, "", "L", false)
+		*ctx.Y = ctx.PDF.GetY()
 	}
-	pdf.SetFont("CMUSerif", "", 11)
+	ctx.PDF.SetFont("CMUSerif", "", 11)
 	return nil
 }
 
-func (b ItalicCommand) ExecuteInline(doc *documents.Document, pdf *gofpdf.Fpdf) {
+func (b ItalicCommand) InlineText(ctx *context.CommandContext) string {
 	text := strings.Join(b.Args, ", ")
-	pdf.SetFontStyle("I")
-	pdf.Write(5, text)
-	pdf.SetFontStyle("") // zurück zu normal
+	ctx.PDF.SetFontStyle("I")
+	ctx.PDF.Write(5, text)
+	ctx.PDF.SetFontStyle("") // zurück zu normal
+	return ""
+}
+
+func (c *ItalicCommand) SetArgs(args []string) {
+	c.Args = args
 }

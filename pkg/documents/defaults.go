@@ -1,26 +1,20 @@
 package documents
 
-var Article = Document{
-	Margin: DocumentMargin{
-		Left:   25.0,
-		Right:  25.0,
-		Top:    30.0,
-		Bottom: 30.0,
-	},
-	PageWidth: 210.0,
+var Article = DocumentMargin{
+	Left:   25.0,
+	Right:  25.0,
+	Top:    30.0,
+	Bottom: 30.0,
 }
 
-var Report = Document{
-	Margin: DocumentMargin{
-		Left:   30.0,
-		Right:  25.0,
-		Top:    35.0,
-		Bottom: 30.0,
-	},
-	PageWidth: 210.0,
+var Report = DocumentMargin{
+	Left:   30.0,
+	Right:  25.0,
+	Top:    35.0,
+	Bottom: 30.0,
 }
 
-var DocumentClasses = map[string]Document{
+var DocumentStyleClasses = map[string]DocumentMargin{
 	"article": Article,
 	"report":  Report,
 }
