@@ -28,4 +28,5 @@ func registerBlock(r *registries.Registry[context.BlockCommand]) {
 	r.Register("unknown", &UnknownCommand{})
 	r.Register("text", &TextCommand{})
 	r.Register("paragraph", &ParagraphCommand{})
+	r.Register("include", &IncludeCommand{})
 }

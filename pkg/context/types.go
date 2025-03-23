@@ -28,3 +28,7 @@ type CommandRegistry struct {
 	Inline *registries.Registry[InlineCommand]
 	Block  *registries.Registry[BlockCommand]
 }
+
+type ArgSetter interface {
+	SetArgs([]string)
+}
