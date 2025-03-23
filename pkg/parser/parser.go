@@ -2,7 +2,6 @@ package parser
 
 import (
 	"bufio"
-	"fmt"
 	"os"
 	"regexp"
 	"strings"
@@ -36,12 +35,8 @@ func ParseFile(path string, reg context.CommandRegistry) ([]any, error) {
 	return result, nil
 }
 
-type ArgSetter interface {
-	SetArgs([]string)
-}
-
 func setArgs(cmd any, args []string) {
-	if s, ok := cmd.(ArgSetter); ok {
+	if s, ok := cmd.(context.ArgSetter); ok {
 		s.SetArgs(args)
 	}
 }
@@ -52,7 +47,6 @@ func ProcessCommand(line string, reg context.CommandRegistry) ([]any, error) {
 		return nil, nil
 	}
 
-	// ➤ Sonderfall: kompletter Blockbefehl
 	if strings.HasPrefix(line, "::") && commandRegex.MatchString(line) {
 		matches := commandRegex.FindAllStringSubmatch(line, -1)
 		if len(matches) == 1 && matches[0][0] == line {
@@ -64,11 +58,14 @@ func ProcessCommand(line string, reg context.CommandRegistry) ([]any, error) {
 				return []any{cmd}, nil
 			}
 
-			return nil, fmt.Errorf("unknown block command: %s", cmdName)
+			log.Debugf("Deferring unknown block command: %s", cmdName)
+			return []any{&commands.DeferredCommand{
+				CommandName: cmdName,
+				Args:        args,
+			}}, nil
 		}
 	}
 
-	// ➤ Inline-Kommandos im Fließtext
 	var paragraph = &commands.ParagraphCommand{}
 	lastIndex := 0
 	matches := commandRegex.FindAllStringSubmatchIndex(line, -1)
@@ -87,9 +84,11 @@ func ProcessCommand(line string, reg context.CommandRegistry) ([]any, error) {
 			paragraph.Elements = append(paragraph.Elements, cmd)
 		} else {
 			paragraph.Elements = append(paragraph.Elements,
-				&commands.TextCommand{Args: []string{"[UNKNOWN:" + cmdName + "]"}})
+				&commands.DeferredInlineCommand{
+					CommandName: cmdName,
+					Args:        args,
+				})
 		}
-
 		lastIndex = match[1]
 	}
 

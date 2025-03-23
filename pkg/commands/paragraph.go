@@ -24,6 +24,8 @@ func (p ParagraphCommand) ExecuteInline(ctx *context.CommandContext) error {
 			ctx.PDF.Write(5, v.Args[0])
 		case context.InlineCommand:
 			ctx.PDF.Write(5, v.InlineText(ctx))
+		case *DeferredInlineCommand:
+			ctx.PDF.Write(5, v.ExecuteInline(ctx))
 		default:
 			fmt.Println("Unbekannter Inline-Typ:", fmt.Sprintf("%T", v))
 		}
