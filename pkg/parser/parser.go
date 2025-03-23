@@ -9,6 +9,7 @@ import (
 
 	"github.com/cheetahbyte/verba/pkg/commands"
 	"github.com/cheetahbyte/verba/pkg/context"
+	log "github.com/sirupsen/logrus"
 )
 
 var commandRegex = regexp.MustCompile(`::(\w+)\{(.*?)\}`)
@@ -26,7 +27,7 @@ func ParseFile(path string, reg context.CommandRegistry) ([]any, error) {
 		line := scanner.Text()
 		cmds, err := ProcessCommand(line, reg)
 		if err != nil {
-			fmt.Println("Fehler:", err)
+			log.Warn(err.Error())
 			continue
 		}
 		result = append(result, cmds...)
