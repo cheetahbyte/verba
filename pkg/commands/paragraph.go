@@ -1,35 +1,43 @@
 package commands
 
 import (
-	"github.com/cheetahbyte/verba/pkg/documents"
-	"github.com/jung-kurt/gofpdf"
+	"fmt"
+
+	"github.com/cheetahbyte/verba/pkg/context"
 )
 
 type ParagraphCommand struct {
-	Elements []Command // Mixed: TextCommand, CiteCommand, BoldCommand, etc.
+	Elements []any // Mixed: TextCommand, CiteCommand, BoldCommand, etc.
 }
 
-func (p ParagraphCommand) ExecuteInline(pdf *gofpdf.Fpdf, y *float64, doc *documents.Document) error {
+func (p ParagraphCommand) InlineText(ctx *context.CommandContext) string {
+	return ""
+}
+
+func (p ParagraphCommand) ExecuteInline(ctx *context.CommandContext) error {
+
+	ctx.PDF.SetY(*ctx.Y) // 🟢 Y-Position setzen
+
 	for _, elem := range p.Elements {
 		switch v := elem.(type) {
-		case TextCommand:
-			pdf.Write(5, v.Args[0])
-		case CiteCommand:
-			for _, key := range v.Args {
-				doc.Cite(key)
-				pdf.Write(5, elem.(CiteCommand).InlineText(doc))
-			}
-		case ItalicCommand:
-			elem.(ItalicCommand).ExecuteInline(doc, pdf)
-		case BoldCommand:
-			elem.(BoldCommand).ExecuteInline(doc, pdf)
+		case *TextCommand:
+			ctx.PDF.Write(5, v.Args[0])
+		case context.InlineCommand:
+			ctx.PDF.Write(5, v.InlineText(ctx))
+		default:
+			fmt.Println("Unbekannter Inline-Typ:", fmt.Sprintf("%T", v))
 		}
-
 	}
-	pdf.Ln(6)
+
+	*ctx.Y += 6   // 🟢 nächste Y-Zeile vorbereiten
+	ctx.PDF.Ln(6) // 🟢 neue Zeile im PDF
+
 	return nil
 }
 
-func (p ParagraphCommand) Execute(pdf *gofpdf.Fpdf, y *float64, doc *documents.Document) error {
-	return p.ExecuteInline(pdf, y, doc)
+func (p ParagraphCommand) Execute(ctx *context.CommandContext) error {
+	return p.ExecuteInline(ctx)
+}
+
+func (c *ParagraphCommand) SetArgs(args []string) {
 }

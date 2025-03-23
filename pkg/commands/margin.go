@@ -4,15 +4,14 @@ import (
 	"fmt"
 	"strconv"
 
-	"github.com/cheetahbyte/verba/pkg/documents"
-	"github.com/jung-kurt/gofpdf"
+	"github.com/cheetahbyte/verba/pkg/context"
 )
 
 type MarginCommand struct {
 	Args []string
 }
 
-func (m MarginCommand) Execute(pdf *gofpdf.Fpdf, y *float64, doc *documents.Document) error {
+func (m MarginCommand) Execute(ctx *context.CommandContext) error {
 	if len(m.Args) != 4 {
 		return fmt.Errorf("Fehler: ::margin{left, right, top, bottom} erfordert 4 Werte")
 	}
@@ -26,16 +25,20 @@ func (m MarginCommand) Execute(pdf *gofpdf.Fpdf, y *float64, doc *documents.Docu
 		return fmt.Errorf("Fehler: Ungültige Werte für ::margin – erwartet wurden Zahlen")
 	}
 
-	doc.Margin.Left = left
-	doc.Margin.Right = right
-	doc.Margin.Top = top
-	doc.Margin.Bottom = bottom
+	ctx.Document.Margin.Left = left
+	ctx.Document.Margin.Right = right
+	ctx.Document.Margin.Top = top
+	ctx.Document.Margin.Bottom = bottom
 
-	pdf.SetMargins(left, top, right)
-	pdf.SetAutoPageBreak(true, bottom)
-	pdf.SetXY(left, top)
+	ctx.PDF.SetMargins(left, top, right)
+	ctx.PDF.SetAutoPageBreak(true, bottom)
+	ctx.PDF.SetXY(left, top)
 
-	*y = top
+	*ctx.Y = top
 
 	return nil
+}
+
+func (c *MarginCommand) SetArgs(args []string) {
+	c.Args = args
 }
