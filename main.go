@@ -1,12 +1,13 @@
 package main
 
 import (
-	"fmt"
-	"log"
+	"flag"
 	"os"
 	"path/filepath"
 	"strings"
 	"time"
+
+	log "github.com/sirupsen/logrus"
 
 	"github.com/cheetahbyte/verba/pkg/commands"
 	"github.com/cheetahbyte/verba/pkg/context"
@@ -17,8 +18,24 @@ import (
 	"github.com/jung-kurt/gofpdf"
 )
 
+var debug = flag.Bool("debug", false, "enable debug logging")
+
 func main() {
 	start := time.Now()
+	flag.Parse()
+	if *debug {
+		log.SetLevel(log.DebugLevel)
+	}
+	log.SetFormatter(&log.TextFormatter{
+		FullTimestamp:    true,
+		DisableColors:    false,
+		QuoteEmptyFields: true,
+		DisableSorting:   true,
+		// Wenn du möchtest:
+		DisableLevelTruncation: true,
+	})
+
+	log.SetOutput(os.Stdout)
 
 	blockCmdRegistry := registries.NewRegistry[context.BlockCommand]()
 	inlineCmdRegistry := registries.NewRegistry[context.InlineCommand]()
@@ -28,7 +45,6 @@ func main() {
 	}
 
 	commands.RegisterAll(cmdReg.Block, cmdReg.Inline)
-
 	doc := documents.NewDocument()
 	// Fonts und PDF vorbereiten
 	pdf := gofpdf.New("P", "mm", "A4", "")
@@ -54,7 +70,10 @@ func main() {
 		Y:           &y,
 		Document:    doc,
 		CmdRegistry: cmdReg,
+		Environment: make(map[string]any),
 	}
+
+	ctx.Environment["debug"] = debug
 
 	pluginCtx := &plugins.PluginContext{
 		Commands: &context.CommandRegistry{
@@ -71,10 +90,10 @@ func main() {
 	for _, file := range files {
 		if strings.HasSuffix(file.Name(), ".so") {
 			path := filepath.Join("plugins", file.Name())
-			log.Printf("Lade Plugin: %s\n", path)
+			log.Debugf("loading plugin %s", file.Name())
 			err := plugins.Load(path, pluginCtx)
 			if err != nil {
-				log.Printf("Fehler beim Laden von Plugin %s: %v", file.Name(), err)
+				log.WithField("plugin", file.Name()).Error("error loading plugin: ", err)
 			}
 		}
 	}
@@ -82,12 +101,7 @@ func main() {
 	// Datei parsen
 	commandList, err := parser.ParseFile("thesis.verba", ctx.CmdRegistry)
 	if err != nil {
-		log.Fatalln("Fehler beim Parsen:", err)
-	}
-
-	fmt.Printf("Gelesene Kommandos: %d\n", len(commandList))
-	for i, cmd := range commandList {
-		fmt.Printf("[%d] -> %T\n", i, cmd)
+		log.WithField("file", err.Error()).Error("failed to parse")
 	}
 
 	// Kommandos ausführen
@@ -95,22 +109,21 @@ func main() {
 		switch c := cmd.(type) {
 		case *commands.ParagraphCommand:
 			if err := c.ExecuteInline(ctx); err != nil {
-				log.Println("Paragraph render error:", err)
+				log.Error("error rendering paragraph command")
 			}
 		case context.BlockCommand:
 			if err := c.Execute(ctx); err != nil {
-				log.Println("Block render error:", err)
+				log.Error("error rendering block command")
 			}
 		default:
-			log.Println("Unbekannter Command-Typ:", c)
+			log.Error("unknown command")
 		}
 	}
 
 	// PDF speichern
 	if err := pdf.OutputFileAndClose("output.pdf"); err != nil {
-		log.Fatalln("Fehler beim Speichern der PDF:", err)
+		log.Error("cannot save file")
 	}
 
-	fmt.Println("PDF erfolgreich erstellt: output.pdf")
-	fmt.Printf("Verarbeitung abgeschlossen in %s\n", time.Since(start))
+	log.Infof("created output.pdf in %s", time.Since(start))
 }
