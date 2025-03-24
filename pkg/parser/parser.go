@@ -13,7 +13,7 @@ import (
 
 var commandRegex = regexp.MustCompile(`::(\w+)\{(.*?)\}`)
 
-func ParseFile(path string, reg context.CommandRegistry) ([]any, error) {
+func ParseFile(path string, ctx *context.CommandContext) ([]any, error) {
 	var result []any
 	file, err := os.Open(path)
 	if err != nil {
@@ -24,7 +24,7 @@ func ParseFile(path string, reg context.CommandRegistry) ([]any, error) {
 	scanner := bufio.NewScanner(file)
 	for scanner.Scan() {
 		line := scanner.Text()
-		cmds, err := ProcessCommand(line, reg)
+		cmds, err := ProcessCommand(line, ctx)
 		if err != nil {
 			log.Warn(err.Error())
 			continue
@@ -41,7 +41,7 @@ func setArgs(cmd any, args []string) {
 	}
 }
 
-func ProcessCommand(line string, reg context.CommandRegistry) ([]any, error) {
+func ProcessCommand(line string, ctx *context.CommandContext) ([]any, error) {
 	line = strings.TrimSpace(line)
 	if line == "" {
 		return nil, nil
@@ -53,7 +53,7 @@ func ProcessCommand(line string, reg context.CommandRegistry) ([]any, error) {
 			cmdName := matches[0][1]
 			args := splitArgs(matches[0][2])
 
-			if cmd, ok := reg.Block.Get(cmdName); ok {
+			if cmd, ok := ctx.CmdRegistry.Block.Get(cmdName); ok {
 				setArgs(cmd, args)
 				return []any{cmd}, nil
 			}
@@ -79,7 +79,7 @@ func ProcessCommand(line string, reg context.CommandRegistry) ([]any, error) {
 		cmdName := line[match[2]:match[3]]
 		args := splitArgs(line[match[4]:match[5]])
 
-		if cmd, ok := reg.Inline.Get(cmdName); ok {
+		if cmd, ok := ctx.CmdRegistry.Inline.Get(cmdName); ok {
 			setArgs(cmd, args)
 			paragraph.Elements = append(paragraph.Elements, cmd)
 		} else {

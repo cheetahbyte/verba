@@ -16,6 +16,10 @@ func (r *Registry[T]) Get(name string) (T, bool) {
 	return zero, false
 }
 
+func (r *Registry[T]) Gets() map[string]T {
+	return r.contents
+}
+
 func NewRegistry[T any]() *Registry[T] {
 	return &Registry[T]{
 		contents: make(map[string]T),

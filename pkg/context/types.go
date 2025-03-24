@@ -20,7 +20,7 @@ type CommandContext struct {
 	PDF         *gofpdf.Fpdf
 	Y           *float64
 	Document    *documents.Document
-	CmdRegistry CommandRegistry
+	CmdRegistry *CommandRegistry
 	Environment map[string]any
 }
 
