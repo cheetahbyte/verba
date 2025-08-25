@@ -30,8 +30,8 @@ export function blockize(ast: Node[]): Block[] {
       cur.push(n);
       continue;
     }
-
-    const chunks = n.value.split(/\n{2,}/);
+    const PARA_BREAK = /\\\\\r?\n/;
+    const chunks = n.value.split(PARA_BREAK);
     chunks.forEach((chunk, i) => {
       if (chunk) cur.push({ ...n, value: chunk });
       if (i < chunks.length - 1) flushPara();
