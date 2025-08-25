@@ -1,5 +1,5 @@
 import { z } from "zod";
-import type { CommandNode } from "@/types";
+import type { CommandNode, CommandOrigin } from "@/types";
 
 export type IRNode =
   | { t: "Paragraph"; children: IRInline[] }
@@ -20,6 +20,7 @@ export type CommandSpec<TSchema extends z.ZodTypeAny = z.ZodTypeAny> = {
   kind: CommandKind;
   schema: TSchema;
   transform: (node: CommandNode, parsed: z.infer<TSchema>) => IRNode;
+  origin: CommandOrigin;
 };
 
 const REG = new Map<string, CommandSpec>();
@@ -42,6 +43,10 @@ register({
     level,
     children: [{ t: "Text", value: text }],
   }),
+  origin: {
+    name: "core",
+    version: "v0",
+  },
 });
 
 register({
@@ -55,6 +60,10 @@ register({
     top: t,
     bottom: b,
   }),
+  origin: {
+    name: "core",
+    version: "v0",
+  },
 });
 
 register({
@@ -65,4 +74,8 @@ register({
     t: "Bold",
     children: [{ t: "Text", value: txt }],
   }),
+  origin: {
+    name: "core",
+    version: "v0",
+  },
 });

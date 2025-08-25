@@ -54,3 +54,8 @@ export function offsetToLineCol(offset: number, starts: number[]): LineCol {
   const line = hi;
   return { line: line + 1, col: offset - starts[line]! + 1 };
 }
+
+export type CommandOrigin = {
+  name: string;
+  version: string;
+};
