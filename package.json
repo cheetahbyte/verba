@@ -4,7 +4,8 @@
   "type": "module",
   "scripts": {
     "test": "bun test",
-    "parse": "bun src/cli.ts example/sample.verba"
+    "parse": "bun src/cli.ts example/sample.verba",
+    "build": "bun build src/cli.ts --compile --outfile verba"
   },
   "devDependencies": {
     "bun-types": "latest"
