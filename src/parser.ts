@@ -1,5 +1,5 @@
-import type { Node, TextNode, CommandNode, ParserError } from "./types";
-import { ParserError as _ParserError } from "./types";
+import type { Node, TextNode, CommandNode, ParserError } from "@/types";
+import { ParserError as _ParserError, NodeKind } from "@/types";
 
 export function parse(input: string): Node[] {
   const p = new Scanner(input);
@@ -62,7 +62,11 @@ function parseText(p: Scanner): TextNode {
     if (p.peek() === ":" && p.peek(1) === ":" && !p.isEscaped()) break;
     out += p.next();
   }
-  return { kind: "text", value: unescapeText(out), loc: { start, end: p.i } };
+  return {
+    kind: NodeKind.Text,
+    value: unescapeText(out),
+    loc: { start, end: p.i },
+  };
 }
 
 function parseCommand(p: Scanner): CommandNode {
@@ -84,7 +88,7 @@ function parseCommand(p: Scanner): CommandNode {
 
   const end = p.i;
   const raw = p.slice(start, end);
-  return { kind: "command", name, args, raw, loc: { start, end } };
+  return { kind: NodeKind.Command, name, args, raw, loc: { start, end } };
 }
 
 function readIdent(p: Scanner): string {
@@ -98,7 +102,7 @@ function readIdent(p: Scanner): string {
 }
 
 function skipSpaces(p: Scanner) {
-  while (!p.eof() && /\s/.test(p.peek())) p.next();
+  while (!p.eof() && /\s/.test(p.peek() ?? "")) p.next();
 }
 
 function readBalanced(p: Scanner, open: string, close: string): string {
@@ -203,7 +207,7 @@ function mergeAdjacentText(nodes: Node[]): Node[] {
   const out: Node[] = [];
   for (const n of nodes) {
     const last = out[out.length - 1];
-    if (last && last.kind === "text" && n.kind === "text") {
+    if (last && last.kind === NodeKind.Text && n.kind === NodeKind.Text) {
       (last as TextNode).value += n.value;
       (last as TextNode).loc.end = n.loc.end;
     } else out.push(n);

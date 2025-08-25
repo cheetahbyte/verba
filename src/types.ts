@@ -5,14 +5,19 @@ export type SourceLocation = {
   end: Position;
 };
 
+export enum NodeKind {
+  Command = "command",
+  Text = "text",
+}
+
 export type TextNode = {
-  kind: "text";
+  kind: NodeKind.Text;
   value: string;
   loc: SourceLocation;
 };
 
 export type CommandNode = {
-  kind: "command";
+  kind: NodeKind.Command;
   name: string;
   args: string[];
   raw: string; // original source code
