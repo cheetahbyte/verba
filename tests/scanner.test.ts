@@ -58,11 +58,11 @@ describe("Scanner", () => {
 
   it("expect throws ParserError on mismatch", () => {
     const s = new Scanner("ab");
-    s.expect("a"); // konsumiert 'a'
+    s.expect("a"); // consumes 'a'
 
     let err: unknown;
     try {
-      s.expect("x"); // konsumiert 'b' und wirft
+      s.expect("x"); // consumes 'b' und throws
     } catch (e) {
       err = e;
     }
@@ -70,7 +70,6 @@ describe("Scanner", () => {
     expect(err).toBeInstanceOf(_ParserError);
     expect(String(err)).toContain("Expected 'x', got 'b'");
 
-    // zeigt, dass 'b' trotz Fehler konsumiert wurde
     expect(s.i).toBe(2);
   });
 
