@@ -1,18 +1,23 @@
 #!/usr/bin/env bun
 import { parse } from "@/parser";
+import { blockize } from "@/blockize";
+import { toIR } from "@/transform";
 
-async function main() {
-  const file = Bun.argv[2];
-  if (!file) {
-    console.error("Usage: verba-parse <file>");
-    process.exit(1);
-  }
-  const src = await Bun.file(file).text();
-  const ast = parse(src);
-  console.log(JSON.stringify(ast, null, 2));
-}
-
-main().catch((err) => {
-  console.error(err);
+const [, , cmd = "ast", file] = Bun.argv;
+if (!file) {
+  console.error("Usage: verba <ast|ir|lint> <file>");
   process.exit(1);
-});
+}
+const src = await Bun.file(file).text();
+
+if (cmd === "ast") {
+  console.log(JSON.stringify(parse(src), null, 2));
+} else if (cmd === "ir") {
+  const { ir, diagnostics } = toIR(blockize(parse(src)));
+  if (diagnostics.length) console.error("Diagnostics:", diagnostics);
+  console.log(JSON.stringify(ir, null, 2));
+} else if (cmd === "lint") {
+  const { diagnostics } = toIR(blockize(parse(src)));
+  diagnostics.forEach((d) => console.error("•", d));
+  process.exit(diagnostics.length ? 1 : 0);
+}
