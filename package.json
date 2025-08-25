@@ -4,8 +4,10 @@
   "type": "module",
   "scripts": {
     "test": "bun test",
-    "parse": "bun src/cli.ts example/sample.verba",
-    "build": "bun build src/cli.ts --compile --outfile verba"
+    "build": "bun build src/cli.ts --compile --outfile verba",
+    "verba:ast": "bun src/cli.ts ast example/sample.verba",
+    "verba:ir": "bun src/cli.ts ir example/sample.verba",
+    "verba:lint": "bun src/cli.ts lint example/sample.verba"
   },
   "devDependencies": {
     "bun-types": "latest"
