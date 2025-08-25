@@ -1,0 +1,12 @@
+{
+  "name": "verba-parser",
+  "version": "0.1.0",
+  "type": "module",
+  "scripts": {
+    "test": "bun test",
+    "parse": "bun src/cli.ts example/sample.verba"
+  },
+  "devDependencies": {
+    "bun-types": "latest"
+  }
+}
