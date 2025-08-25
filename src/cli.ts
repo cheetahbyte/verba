@@ -1,5 +1,5 @@
 #!/usr/bin/env bun
-import { parse } from "./parser";
+import { parse } from "@/parser";
 
 async function main() {
   const file = Bun.argv[2];
