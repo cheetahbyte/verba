@@ -1,4 +1,4 @@
-import { ParserError as _ParserError } from "./types";
+import { ParserError as _ParserError } from "@/types";
 
 export class Scanner {
   constructor(
@@ -6,23 +6,23 @@ export class Scanner {
     public i = 0,
   ) {}
 
-  eof() {
+  public eof() {
     return this.i >= this.src.length;
   }
 
-  peak(ahead: number = 0) {
+  public peek(ahead: number = 0) {
     return this.src[this.i + ahead];
   }
 
-  next() {
+  public next() {
     return this.src[this.i++];
   }
 
-  slice(start: number, end: number) {
+  public slice(start: number, end: number) {
     return this.src.slice(start, end);
   }
 
-  isEscaped(idx = this.i): boolean {
+  public isEscaped(idx = this.i): boolean {
     let backslashes = 0;
     let j = idx - 1;
     while (j >= 0 && this.src[j] === "\\") {
@@ -32,7 +32,7 @@ export class Scanner {
     return backslashes % 2 === 1;
   }
 
-  expect(char: string) {
+  public expect(char: string) {
     const got = this.next();
     if (got !== char)
       throw new _ParserError(

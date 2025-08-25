@@ -1,5 +1,6 @@
 import type { Node, TextNode, CommandNode, ParserError } from "@/types";
 import { ParserError as _ParserError, NodeKind } from "@/types";
+import { Scanner } from "@/scanner";
 
 export function parse(input: string): Node[] {
   const p = new Scanner(input);
@@ -15,44 +16,6 @@ export function parse(input: string): Node[] {
   }
 
   return mergeAdjacentText(nodes);
-}
-
-// --- Scanner / Utils ---
-class Scanner {
-  constructor(
-    public src: string,
-    public i = 0,
-  ) {}
-  eof() {
-    return this.i >= this.src.length;
-  }
-  peek(ahead = 0) {
-    return this.src[this.i + ahead];
-  }
-  next() {
-    return this.src[this.i++];
-  }
-  slice(start: number, end: number) {
-    return this.src.slice(start, end);
-  }
-  isEscaped(idx = this.i): boolean {
-    // Ein Token gilt als escaped, wenn eine ungerade Anzahl Backslashes davor steht
-    let backslashes = 0;
-    let j = idx - 1;
-    while (j >= 0 && this.src[j] === "\\") {
-      backslashes++;
-      j--;
-    }
-    return backslashes % 2 === 1;
-  }
-  expect(char: string) {
-    const got = this.next();
-    if (got !== char)
-      throw new _ParserError(
-        `Expected '${char}', got '${got ?? "EOF"}'`,
-        this.i - 1,
-      );
-  }
 }
 
 function parseText(p: Scanner): TextNode {
