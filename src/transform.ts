@@ -1,8 +1,6 @@
-// src/transform.ts
 import type { IRNode, IRInline } from "@/registry";
 import type { Block } from "@/blockize";
 import { getSpec } from "@/registry";
-import { ParserError } from "@/types";
 import { z } from "zod";
 import { Diagnostic, Diagnostics } from "@/diagnostics";
 
