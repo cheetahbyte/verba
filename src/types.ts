@@ -55,7 +55,11 @@ export function offsetToLineCol(offset: number, starts: number[]): LineCol {
   return { line: line + 1, col: offset - starts[line]! + 1 };
 }
 
+export type CommandSource = "core" | "cli" | "plugin";
+
 export type CommandOrigin = {
   name: string;
   version: string;
+  source?: CommandSource;
+  pluginId?: string;
 };

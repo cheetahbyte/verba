@@ -4,27 +4,45 @@ import type { Block } from "@/blockize";
 import { getSpec } from "@/registry";
 import { ParserError } from "@/types";
 import { z } from "zod";
+import { Diagnostic, Diagnostics } from "@/diagnostics";
 
-export type TransformResult = { ir: IRNode[]; diagnostics: string[] };
+export type TransformResult = { ir: IRNode[]; diagnostics: Diagnostic[] };
 
-export function toIR(blocks: Block[]): TransformResult {
+export function toIR(
+  blocks: Block[],
+  opts?: { reporter?: Diagnostics; lineStarts?: number },
+): TransformResult {
   const ir: IRNode[] = [];
-  const diagnostics: string[] = [];
-
+  const diagnostics: Diagnostic[] = [];
+  const report = (d: Diagnostic) => {
+    diagnostics.push(d);
+    opts?.reporter?.report?.(d);
+  };
   for (const b of blocks) {
     if (b.kind === "command") {
       const spec = getSpec(b.node.name);
       if (!spec) {
-        diagnostics.push(`Unknown command ::${b.node.name}`);
+        report({
+          level: "error",
+          code: "transform/unknown-command",
+          message: `Unknown command ::${b.node.name}`,
+          pos: b.node.loc?.start,
+        });
         continue;
       }
       try {
         const parsed = (spec.schema as z.ZodTypeAny).parse(b.node.args);
         ir.push(spec.transform(b.node, parsed));
       } catch (e) {
-        diagnostics.push(
-          `Invalid args for ::${b.node.name}: ${(e as Error).message}`,
-        );
+        report({
+          level: "error",
+          code: "transform/invalid-args",
+          message: `::${b.node.name} arguments invalid: ${(e as Error).message}`,
+          plugin: spec.origin
+            ? `${spec.origin.name}@${spec.origin.version}`
+            : undefined,
+          pos: b.node.loc?.start,
+        });
       }
       continue;
     }
@@ -37,7 +55,12 @@ export function toIR(blocks: Block[]): TransformResult {
       } else {
         const spec = getSpec(part.name);
         if (!spec) {
-          diagnostics.push(`Unknown inline ::${part.name}`);
+          report({
+            level: "error",
+            code: "transform/unknown-inline",
+            message: `Unknown inline ::${part.name}`,
+            pos: part.loc?.start,
+          });
           continue;
         }
         try {
@@ -48,13 +71,27 @@ export function toIR(blocks: Block[]): TransformResult {
             if (node.t === "Bold" || node.t === "Cite" || node.t === "Text") {
               children.push(node as IRInline);
             } else {
-              diagnostics.push(`Block command ::${part.name} used inline`);
+              report({
+                level: "warn",
+                code: "transform/block-used-inline",
+                message: `Block command ::${part.name} used inline`,
+                plugin: spec.origin
+                  ? `${spec.origin.name}@${spec.origin.version}`
+                  : undefined,
+                pos: part.loc?.start,
+              });
             }
           }
         } catch (e) {
-          diagnostics.push(
-            `Invalid args for ::${part.name}: ${(e as Error).message}`,
-          );
+          report({
+            level: "error",
+            code: "transform/invalid-args",
+            message: `::${part.name} arguments invalid: ${(e as Error).message}`,
+            plugin: spec.origin
+              ? `${spec.origin.name}@${spec.origin.version}`
+              : undefined,
+            pos: part.loc?.start,
+          });
         }
       }
     }

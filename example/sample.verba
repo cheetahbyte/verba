@@ -1,5 +1,5 @@
 ::title{My Document}
 This is a paragraph with an inline ::bold{word} and a citation ::cite{"Doe, 2020"}.
 
-::margin{20mm, 20mm, 25mm, 25mm}
+::heading{20mm, 20mm, 25mm, 25mm}
 ::bibliography{file.bib}
