@@ -1,5 +1,2 @@
-::title{My Document}
-This is a paragraph with an inline ::bold{word} and a citation ::cite{"Doe, 2020"}.
-
-::heading{20mm, 20mm, 25mm, 25mm}
-::bibliography{file.bib}
+::heading{1, Title}
+This is a paragraph with an inline ::bold{word}.
