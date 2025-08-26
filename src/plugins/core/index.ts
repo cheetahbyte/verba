@@ -14,7 +14,7 @@ export async function register(
   registerFn.command({
     name: "heading",
     kind: "block",
-    schema: z.tuple([z.number().int().min(1).max(6), z.string()]),
+    schema: z.tuple([z.coerce.number().int().min(1).max(6), z.string()]),
     transform: (_n, [level, text]) => ({
       t: "Heading",
       level,

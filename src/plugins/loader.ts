@@ -91,7 +91,8 @@ export class PluginLoader {
           });
           return;
         }
-        if (!spec.schema || "safeParse" in spec.schema) {
+        const hasZod = typeof (spec as any).schema?.safeParse === "function";
+        if (!hasZod) {
           ctx.diagnostics.report({
             level: "error",
             code: "plugin/spec-invalid",
@@ -108,6 +109,7 @@ export class PluginLoader {
             message: `Command '${spec.name}' missing transform()`,
             plugin: origin.pluginId,
           });
+          return;
         }
 
         // TODO: implement conflict handling with conflictPolicy
