@@ -38,7 +38,7 @@ jobs:
         run: bun install --frozen-lockfile
 
       - name: Build executable
-        run: bun build ./src/cli.ts --compile --outfile ${{ matrix.asset_name }}
+        run: bun build ./src/cli.ts --compile --outfile ${{ matrix.asset_name }} --minify
 
       - name: Upload artifact
         uses: actions/upload-artifact@v4
