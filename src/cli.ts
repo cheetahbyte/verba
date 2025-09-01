@@ -1,6 +1,2 @@
 #! /usr/bin/env bun
-function main() {
-  console.log();
-}
-
-main();
+console.log(Bun.argv);
