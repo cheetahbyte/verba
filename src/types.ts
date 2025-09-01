@@ -1,31 +1,3 @@
-export type Position = number;
-
-export type SourceLocation = {
-  start: Position;
-  end: Position;
-};
-
-export enum NodeKind {
-  Command = "command",
-  Text = "text",
-}
-
-export type TextNode = {
-  kind: NodeKind.Text;
-  value: string;
-  loc: SourceLocation;
-};
-
-export type CommandNode = {
-  kind: NodeKind.Command;
-  name: string;
-  args: string[];
-  raw: string; // original source code
-  loc: SourceLocation;
-};
-
-export type Node = TextNode | CommandNode;
-
 export class ParserError extends Error {
   constructor(
     message: string,
@@ -36,30 +8,44 @@ export class ParserError extends Error {
   }
 }
 
-export type LineCol = { line: number; col: number };
+export type Position = number;
 
-export function buildLineStarts(src: string): number[] {
-  const starts = [0];
-  for (let i = 0; i < src.length; i++) if (src[i] === "\n") starts.push(i + 1);
-  return starts;
-}
-export function offsetToLineCol(offset: number, starts: number[]): LineCol {
-  let lo = 0,
-    hi = starts.length - 1;
-  while (lo <= hi) {
-    const mid = (lo + hi) >> 1;
-    if (starts[mid]! <= offset) lo = mid + 1;
-    else hi = mid - 1;
-  }
-  const line = hi;
-  return { line: line + 1, col: offset - starts[line]! + 1 };
-}
-
-export type CommandSource = "core" | "cli" | "plugin";
-
-export type CommandOrigin = {
-  name: string;
-  version: string;
-  source?: CommandSource;
-  pluginId?: string;
+export type SourceLocation = {
+  start: Position;
+  end: Position;
 };
+
+export enum NodeType {
+  Root = "root",
+  Text = "text",
+  Command = "command",
+  Argument = "argument",
+}
+
+export interface BaseNode {
+  type: NodeType;
+  loc: SourceLocation;
+}
+
+export interface TextNode extends BaseNode {
+  type: NodeType.Text;
+  value: string;
+}
+
+export interface CommandNode extends BaseNode {
+  type: NodeType.Command;
+  name: string;
+  arguments: ArgumentNode[];
+}
+
+export interface ArgumentNode extends BaseNode {
+  type: NodeType.Argument;
+  children: Node[];
+}
+
+export interface RootNode extends BaseNode {
+  type: NodeType.Root;
+  children: Node[];
+}
+
+export type Node = TextNode | CommandNode | ArgumentNode;

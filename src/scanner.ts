@@ -1,4 +1,4 @@
-import { ParserError as _ParserError } from "@/types";
+import { ParserError } from "@/types";
 
 export class Scanner {
   constructor(
@@ -35,7 +35,7 @@ export class Scanner {
   public expect(char: string) {
     const got = this.next();
     if (got !== char)
-      throw new _ParserError(
+      throw new ParserError(
         `Expected '${char}', got '${got ?? "EOF"}'`,
         this.i - 1,
       );
