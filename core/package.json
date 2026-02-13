@@ -1,0 +1,17 @@
+{
+  "name": "@verba/core",
+  "version": "0.1.0",
+  "type": "module",
+  "main": "src/index.ts",
+  "bin": {
+    "verba": "src/cli/main.ts"
+  },
+  "dependencies": {
+      "@verba/builtin-hello": "workspace:*"
+    },
+  "scripts": {
+    "dev": "bun run src/cli/main.ts",
+    "start": "bun run src/cli/main.ts",
+    "build": "bun build src/cli/main.ts --outdir dist"
+  }
+}
