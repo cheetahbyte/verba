@@ -1,3 +1,5 @@
+::includebib{../references.bib}
 This is plain text.
-::hello{Leo}
+::c{Miller2024}
 Done.
+::biblio{}

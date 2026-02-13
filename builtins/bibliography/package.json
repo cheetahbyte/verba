@@ -1,0 +1,10 @@
+{
+  "name": "@verba/builtin-bibliography",
+  "version": "0.1.0",
+  "type": "module",
+  "main": "./index.ts",
+  "dependencies": {
+    "@verba/core": "workspace:*",
+    "citation-js": "^0.7.22"
+  }
+}

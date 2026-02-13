@@ -2,9 +2,10 @@ import { loadJSPlugin } from "./load-js";
 import type { Host } from "./host";
 
 export async function loadBuiltins(host: Host) {
-  const hello = await import("@verba/builtin-hello");
-  if (typeof (hello as any).register !== "function") {
+  // bibliography
+  const biblio = await import("@verba/builtin-bibliography")
+  if (typeof (biblio as any).register !== "function") {
     throw new Error("@verba/builtin-hello must export register(host)");
   }
-  await (hello as any).register(host);
+  await (biblio as any).register(host);
 }

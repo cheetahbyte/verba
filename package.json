@@ -4,20 +4,23 @@
   "type": "module",
   "private": false,
   "workspaces": [
-     "core",
-     "builtins/*"
-   ],
-   "scripts": {
-      "dev": "bun --filter @verba/core dev",
-      "build": "bun --filter @verba/core build",
-      "start": "bun --filter @verba/core start --",
-      "test": "bun test"
-    },
+    "core",
+    "builtins/*"
+  ],
+  "scripts": {
+    "dev": "bun --filter @verba/core dev",
+    "build": "bun --filter @verba/core build",
+    "start": "bun --filter @verba/core start --",
+    "test": "bun test"
+  },
   "license": "MIT",
   "devDependencies": {
     "@types/bun": "latest"
   },
   "peerDependencies": {
     "typescript": "^5"
+  },
+  "dependencies": {
+    "citation-js": "^0.7.22"
   }
 }

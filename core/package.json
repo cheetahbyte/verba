@@ -7,7 +7,7 @@
     "verba": "src/cli/main.ts"
   },
   "dependencies": {
-      "@verba/builtin-hello": "workspace:*"
+      "@verba/builtin-bibliography": "workspace:*"
     },
   "scripts": {
     "dev": "bun run src/cli/main.ts",

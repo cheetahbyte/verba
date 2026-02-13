@@ -1,9 +1,0 @@
-{
-  "name": "@verba/builtin-hello",
-  "version": "0.1.0",
-  "type": "module",
-  "main": "./index.ts",
-  "dependencies": {
-    "@verba/core": "workspace:*"
-  }
-}
