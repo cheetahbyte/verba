@@ -1,9 +1,6 @@
 #!/usr/bin/env bun
-import { Host } from "../plugin/host";
-import { loadBuiltins } from "../plugin/discover";
-import { parseDocument } from "../parser";
-import { evalDocument } from "../eval";
 import path from "node:path";
+import { Verba } from "../verba/verba";
 
 
 async function readStdin(): Promise<string> {
@@ -12,17 +9,14 @@ async function readStdin(): Promise<string> {
 }
 
 async function main() {
-  const host = new Host();
-  await loadBuiltins(host);
+  const verba = new Verba()
 
   const [, , file] = process.argv;
 
   const input = file
     ? await Bun.file(path.resolve(process.cwd(), file)).text()
     : await readStdin();
-
-  const ast = parseDocument(input);
-  const output = await evalDocument(host, ast);
+  const output = (await verba.execute(input)) as unknown as string
 
   process.stdout.write(output);
 }
