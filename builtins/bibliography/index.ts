@@ -1,7 +1,8 @@
 import type { BaseOp, Context, VerbaPlugin, VerbaPluginHost } from "@verba/core";
 import { makeOp } from "@verba/core";
 import { readFile } from "node:fs/promises";
-import Cite from "citation-js";
+import { Cite, plugins } from '@citation-js/core';
+import '@citation-js/plugin-bibtex';
 import type { BibState, BibEntry } from "./types";
 import { renderOpCiteText } from "./renderfuncs";
 

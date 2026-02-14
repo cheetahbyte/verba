@@ -9,19 +9,20 @@
   ],
   "scripts": {
     "dev": "bun --elide-lines=0 --no-summary  --filter @verba/core dev",
-    "build": "bun --elide-lines=0 --no-summary --filter@verba/core build",
+    "build": "bun --elide-lines=0 --no-summary --filter @verba/core build",
     "start": "bun --elide-lines=0 --no-summary --filter  @verba/core start --",
     "test": "bun test"
   },
-
   "license": "MIT",
   "devDependencies": {
-    "@types/bun": "latest"
+    "@types/bun": "latest",
+    "esbuild-visualizer": "^0.7.0"
   },
   "peerDependencies": {
     "typescript": "^5"
   },
   "dependencies": {
-    "citation-js": "^0.7.22"
+    "@citation-js/core": "^0.7.21",
+    "@citation-js/plugin-bibtex": "^0.7.21"
   }
 }

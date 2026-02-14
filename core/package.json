@@ -12,6 +12,8 @@
   "scripts": {
     "dev": "bun run src/cli/main.ts",
     "start": "bun run src/cli/main.ts",
-    "build": "bun build src/cli/main.ts --outdir dist"
+    "build": "bun run build:cli && bun run build:web",
+    "build:cli": "bun build src/entrypoints/cli.ts --compile --outfile verba",
+    "build:web": "bun build src/entrypoints/web.ts --outdir dist --target browser --format esm --minify --sourcemap"
   }
 }

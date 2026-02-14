@@ -1,4 +1,4 @@
-::includebib{../references.bib}
+::includebib{./references.bib}
 This is plain text.
 ::c{Miller2024}
 Done.
